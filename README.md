@@ -11,28 +11,11 @@ Enable non-primary monitors that were previously disabled
 Enable the GPU Miner through Awesome Miner if it was previously disabled
 Close the Gamestream session
 
-The launcher is configured in the GamestreamLauncher.exe.config xml file.  Do not remove any keys from the file, if a key is unused just leave it empty.
 
+Installation:
+Copy the release folder to your desired location.
+Run GamestreamLauncher.exe to configure the launcher.
+Add a custom game in Geforce Experience that points to the launcher.
 
-config.file parameters:
-
-AppName - The name of the application or game to launch, will show in the launcher splashscreen as "<appName> Launcher"
-AppPath - The path of the application or game to launch.  This will be a full qualified path like "C:\Games\Game.exe"
-
-AdminAccount - The user name of an account with admin access (admin access account is used for terminating the Gamestream session and running elevated scripts)
-AdminPassword - The password of the admin account
-
-MultiMonSwitchEnabled - Allow the launcher to enable/disable monitors
-
-AwesomeMinerSwitchEnabled - Allow the launcher to enable/disable miners through Awesome Miner
-AwesomeMinerUrl - The url of the web api for Awesome Miner (usually 127.0.0.1).
-AwesomeMinerPort - The port of the web api for Awesome Miner
-AwesomeMinerKey - The api key for Awesome Miner
-
-ScriptsEnabled - Enable running of the startup/shutdown scripts
-StartupScriptPath - full qualified path of the startup script to executed
-StartupScriptParameters - any additional parameters to run on the script
-StartupScriptElevated - whether we should run the script as an admin
-ShutdownScriptPath - full qualified path of the shutdown script
-ShutdownScriptParameters - any additional parameters to run on the script
-ShutdownScriptElevated - whether we should run the script as an admin
+The launcher is configured with the config utility when launching it for the first time.  You can run the config utility again by
+deleting the user.config file that can be found at %localappdata%\GamestreamLauncher under the proper version.
