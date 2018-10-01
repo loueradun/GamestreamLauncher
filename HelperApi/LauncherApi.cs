@@ -22,8 +22,6 @@ namespace GamestreamLauncher.HelperApi
 
     class LauncherApi
     {
-        string appPath = "";
-
         string multimonitortoolPath = System.AppDomain.CurrentDomain.BaseDirectory + "Binaries\\MultiMonitorTool.exe";
         string multimonitortoolConfigName = "defaultMonitorSetup.cfg";
 
@@ -58,9 +56,8 @@ namespace GamestreamLauncher.HelperApi
         public event ApplicationStoppedEvent ApplicationStopped;
         public event StreamClosedEvent StreamClosed;
 
-        public LauncherApi(string appPath)
+        public LauncherApi()
         {
-            this.appPath = appPath;
         }
 
         #region Monitor Helpers
@@ -99,17 +96,13 @@ namespace GamestreamLauncher.HelperApi
             {
                 foreach (string monitor in monitorsToDisable) // for some reason loading the original config will only re-enable a single monitor so we must run this for each monitor we disabled
                 {
-                    var myProcess = new Process { StartInfo = new ProcessStartInfo(multimonitortoolPath, "/loadConfig " + multimonitortoolConfigName) };
-                    myProcess.Start();
-                    myProcess.WaitForExit();
+                    RunScript(multimonitortoolPath, "/loadConfig " + multimonitortoolConfigName);
                 }
                 MonitorModeMulti?.Invoke(this, new MonitorInfoEventArgs() { MonitorsToDisable = monitorsToDisable });
             }
             else
             {
-                var myProcess = new Process { StartInfo = new ProcessStartInfo(multimonitortoolPath, "/disable " + String.Join(" ", monitorsToDisable.ToArray())) };
-                myProcess.Start();
-                myProcess.WaitForExit();
+                RunScript(multimonitortoolPath, "/disable " + String.Join(" ", monitorsToDisable.ToArray()));
                 MonitorModeSingle?.Invoke(this, new MonitorInfoEventArgs() { MonitorsToDisable = monitorsToDisable });
             }
         }
@@ -118,37 +111,47 @@ namespace GamestreamLauncher.HelperApi
 
         #region Miner Helpers
 
-        public void LoadMinerInfo(string ip, string port, string key)
+        public bool LoadMinerInfo(string ip, string port, string key)
         {
-            string strResponse = "";
+            bool success = true;
 
-            minerIP = ip;
-            minerPort = port;
-            minerKey = key;
-
-            System.Net.HttpWebRequest request = (HttpWebRequest)WebRequest.Create(String.Format("http://{0}:{1}/api/miners?key={2}", minerIP, minerPort, minerKey));
-
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-            using (Stream stream = response.GetResponseStream())
-            using (StreamReader reader = new StreamReader(stream))
+            try
             {
-                strResponse = reader.ReadToEnd();
-            }
+                string strResponse = "";
 
-            AwesomeMinerApi.AwesomeMinerStatus minerStatus = JsonConvert.DeserializeObject<AwesomeMinerApi.AwesomeMinerStatus>(strResponse);
+                minerIP = ip;
+                minerPort = port;
+                minerKey = key;
 
-            foreach (AwesomeMinerApi.GroupList group in minerStatus.groupList)
-            {
-                foreach (AwesomeMinerApi.MinerList miner in group.minerList)
+                System.Net.HttpWebRequest request = (HttpWebRequest)WebRequest.Create(String.Format("http://{0}:{1}/api/miners?key={2}", minerIP, minerPort, minerKey));
+
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                using (Stream stream = response.GetResponseStream())
+                using (StreamReader reader = new StreamReader(stream))
                 {
-                    if (miner.hostname == "localhost" && miner.hasGpu && miner.canStop)
+                    strResponse = reader.ReadToEnd();
+                }
+
+                AwesomeMinerApi.AwesomeMinerStatus minerStatus = JsonConvert.DeserializeObject<AwesomeMinerApi.AwesomeMinerStatus>(strResponse);
+
+                foreach (AwesomeMinerApi.GroupList group in minerStatus.groupList)
+                {
+                    foreach (AwesomeMinerApi.MinerList miner in group.minerList)
                     {
-                        minersToStop.Add(miner.id.ToString());
+                        if (miner.hostname == "localhost" && miner.hasGpu && miner.canStop)
+                        {
+                            minersToStop.Add(miner.id.ToString());
+                        }
                     }
                 }
-            }
 
-            MinerInfoLoaded?.Invoke(this, new MinerInfoEventArgs() { MinersToDisable = minersToStop });
+                MinerInfoLoaded?.Invoke(this, new MinerInfoEventArgs() { MinersToDisable = minersToStop });
+            }
+            catch(Exception ex)
+            {
+                success = false;
+            }
+            return success;
         }
 
         public void StartStopMiner(bool restore = false)
@@ -184,40 +187,28 @@ namespace GamestreamLauncher.HelperApi
 
         #region Script Helpers
 
-        public void RunStartupScripts(string scriptPath, string scriptParams = "", string userName = "", string password = "")
+        public void RunStartupScripts(string scriptPath, string scriptParams = "")
         {
-            RunScript(scriptPath, scriptParams, userName, password);
+            RunScript(scriptPath, scriptParams);
 
             StartupScriptsFinished?.Invoke(this, EventArgs.Empty);
         }
 
-        public void RunShutdownScripts(string scriptPath, string scriptParams = "", string userName = "", string password = "")
+        public void RunShutdownScripts(string scriptPath, string scriptParams = "")
         {
-            RunScript(scriptPath, scriptParams, userName, password);
+            RunScript(scriptPath, scriptParams);
 
             ShutdownScriptsFinished?.Invoke(this, EventArgs.Empty);
         }
 
-        private void RunScript(string scriptPath, string scriptParams = "", string userName = "", string password = "")
+        private void RunScript(string scriptPath, string scriptParams = "")
         {
             if (!String.IsNullOrEmpty(scriptPath))
             {
                 var processStartInfo = new ProcessStartInfo(scriptPath, scriptParams);
-                //processStartInfo.CreateNoWindow = true;
-
-                if (!String.IsNullOrEmpty(userName) && !String.IsNullOrEmpty(password))
-                {
-                    SecureString securePass = new SecureString();
-                    foreach (Char ch in password)
-                    {
-                        securePass.AppendChar(ch);
-                    }
-
-                    processStartInfo.UserName = userName;
-                    processStartInfo.Password = securePass;
-                    processStartInfo.UseShellExecute = false;
-                }
-
+                processStartInfo.CreateNoWindow = true;
+                processStartInfo.UseShellExecute = false;
+                
                 var myProcess = new Process { StartInfo = processStartInfo };
                 myProcess.Start();
                 myProcess.WaitForExit();
@@ -228,7 +219,7 @@ namespace GamestreamLauncher.HelperApi
 
         #region Application Helpers
 
-        public void LaunchApplication()
+        public void LaunchApplication(string appPath)
         {
             var myProcess = new Process { StartInfo = new ProcessStartInfo(appPath) };
             myProcess.Start();
@@ -237,18 +228,11 @@ namespace GamestreamLauncher.HelperApi
             ApplicationStopped?.Invoke(this, EventArgs.Empty);
         }
 
-        public void CloseStream(string userName, string password)
+        public void CloseStream()
         {
-            SecureString securePass = new SecureString();
-            foreach (Char ch in password)
-            {
-                securePass.AppendChar(ch);
-            }
+            RunScript("net", "start NvContainerRestart");
+            RunScript("net", "stop NvContainerLocalSystem");
 
-            var myProcess = new Process { StartInfo = new ProcessStartInfo("taskkill", "/IM nvstreamer.exe /F") { UserName = userName, Password = securePass, UseShellExecute = false, CreateNoWindow = true } };
-
-            myProcess.Start();
-            myProcess.WaitForExit();
             StreamClosed?.Invoke(this, EventArgs.Empty);
         }
 

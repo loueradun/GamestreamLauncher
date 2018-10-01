@@ -2,6 +2,8 @@
 using System;
 using System.Configuration;
 using System.IO;
+using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,10 +19,6 @@ namespace GamestreamLauncher
 
         string appPath = "";
         string appName = "Gamestream";
-        string appConfigFile = "GamestreamLauncher.exe.config";
-
-        string adminUser;
-        string adminPassword;
 
         bool multimonitorSwitchEnabled = false;
         bool minerSwitchEnabled = false;
@@ -32,10 +30,8 @@ namespace GamestreamLauncher
 
         string startupScriptPath;
         string startupScriptParameters;
-        bool startupScriptElevated;
         string shutdownScriptPath;
         string shutdownScriptParameters;
-        bool shutdownScriptElevated;
 
         LauncherApi launcherApi;
 
@@ -45,26 +41,42 @@ namespace GamestreamLauncher
         {
             InitializeComponent();
 
-            LoadConfig();
+            EditConfig editConfigWindow = new EditConfig();
 
-            launcherApi = new LauncherApi(appPath);
+            if (String.IsNullOrEmpty(Properties.Settings.Default.AppName) || String.IsNullOrEmpty(Properties.Settings.Default.AppPath))
+            {
+                editConfigWindow.ShowDialog();
+                QuitGracefully(true);
+            } else
+            {
+                LoadConfig();
 
-            // configure callbacks
-            launcherApi.MonitorInfoLoaded += MonitorInfoLoaded;
-            launcherApi.MonitorModeSingle += MonitorModeSingle;
-            launcherApi.MonitorModeMulti += MonitorModeMulti;
-            launcherApi.MinerInfoLoaded += MinerInfoLoaded;
-            launcherApi.MinerDisabled += MinerDisabled;
-            launcherApi.MinerEnabled += MinerEnabled;
-            launcherApi.StartupScriptsFinished += StartupScriptsFinished;
-            launcherApi.ShutdownScriptsFinished += ShutdownScriptsFinished;
-            launcherApi.ApplicationStarted += ApplicationStarted;
-            launcherApi.ApplicationStopped += ApplicationStopped;
-            launcherApi.StreamClosed += StreamClosed;
+                launcherApi = new LauncherApi();
 
-            lblHeader.Content = appName + " Launcher";
+                // configure callbacks
+                launcherApi.MonitorInfoLoaded += MonitorInfoLoaded;
+                launcherApi.MonitorModeSingle += MonitorModeSingle;
+                launcherApi.MonitorModeMulti += MonitorModeMulti;
+                launcherApi.MinerInfoLoaded += MinerInfoLoaded;
+                launcherApi.MinerDisabled += MinerDisabled;
+                launcherApi.MinerEnabled += MinerEnabled;
+                launcherApi.StartupScriptsFinished += StartupScriptsFinished;
+                launcherApi.ShutdownScriptsFinished += ShutdownScriptsFinished;
+                launcherApi.ApplicationStarted += ApplicationStarted;
+                launcherApi.ApplicationStopped += ApplicationStopped;
+                launcherApi.StreamClosed += StreamClosed;
 
-            StartWorkflow();
+                lblHeader.Content = appName + " Launcher";
+
+                StartWorkflow();
+            }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+
+            Application.Current.Shutdown();
         }
 
         #region Workflow
@@ -132,11 +144,11 @@ namespace GamestreamLauncher
                 if (restore)
                 {
                     UpdateStatus("Running shutdown scripts...");
-                    new Task(() => { launcherApi.RunShutdownScripts(shutdownScriptPath, shutdownScriptParameters, shutdownScriptElevated ? adminUser : "", shutdownScriptElevated ? adminPassword : ""); }).Start();
+                    new Task(() => { launcherApi.RunShutdownScripts(shutdownScriptPath, shutdownScriptParameters); }).Start();
                 } else
                 {
                     UpdateStatus("Running startup scripts...");
-                    new Task(() => { launcherApi.RunStartupScripts(startupScriptPath, startupScriptParameters, startupScriptElevated ? adminUser : "", startupScriptElevated ? adminPassword : ""); }).Start();
+                    new Task(() => { launcherApi.RunStartupScripts(startupScriptPath, startupScriptParameters); }).Start();
                 }
             }
             else
@@ -157,7 +169,7 @@ namespace GamestreamLauncher
             else
             {
                 UpdateStatus("Launching " + appName + "...");
-                new Task(() => { launcherApi.LaunchApplication(); }).Start();
+                new Task(() => { launcherApi.LaunchApplication(appPath); }).Start();
             }
         }
 
@@ -165,14 +177,19 @@ namespace GamestreamLauncher
         {
             if (closeApp)
             {
-                Thread.Sleep(10000);
-                Application.Current.Dispatcher.Invoke(new Action(() => {
-                    Application.Current.Shutdown();
-                }));
+                if (Application.Current.Dispatcher.CheckAccess())
+                {
+                    this.Close();
+                }
+                else
+                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    {
+                        this.Close();
+                    }));
             } else
             {
-                UpdateStatus("Terminating Gamestream (Ignore error shown, this is expected)...");
-                new Task(() => { launcherApi.CloseStream(adminUser, adminPassword); }).Start();
+                UpdateStatus("Terminating Gamestream Session...");
+                new Task(() => { launcherApi.CloseStream(); }).Start();
             }
         }
 
@@ -184,6 +201,9 @@ namespace GamestreamLauncher
             {
                 UpdateStatus("Miner is currently running, attempting to stop...");
                 new Task(() => { launcherApi.StartStopMiner(); }).Start();
+            } else
+            {
+                HandleMonitorJobs();
             }
         }
 
@@ -193,6 +213,9 @@ namespace GamestreamLauncher
             {
                 UpdateStatus("Switching to single monitor mode...");
                 new Task(() => { launcherApi.SwitchMonitorMode(); }).Start();
+            } else
+            {
+                HandleScriptJobs();
             }
         }
 
@@ -243,48 +266,26 @@ namespace GamestreamLauncher
 
         #region UI Helpers
 
-        public string GetConfigValue(string valueName)
-        {
-            string value = null;
-            if (String.IsNullOrEmpty(ConfigurationManager.AppSettings[valueName]))
-            {
-                ThrowError(String.Format("Missing Appsetting \"{0}\" in {1}", valueName, appConfigFile), true);
-            } else
-            {
-                value = ConfigurationManager.AppSettings[valueName];
-            }
-            return value;
-        }
-
         public void LoadConfig()
         {
-            if (File.Exists(System.AppDomain.CurrentDomain.BaseDirectory + "GamestreamLauncher.exe.config"))
+            appName = Properties.Settings.Default.AppName;
+            appPath = Properties.Settings.Default.AppPath;
+            multimonitorSwitchEnabled = Properties.Settings.Default.MultiMonSwitchEnabled;
+            minerSwitchEnabled = Properties.Settings.Default.AwesomeMinerSwitchEnabled;
+            scriptsEnabled = Properties.Settings.Default.ScriptsEnabled;
+            if (minerSwitchEnabled)
             {
-                appName = GetConfigValue("AppName");
-                appPath = GetConfigValue("AppPath");
-                adminUser = GetConfigValue("AdminAccount");
-                adminPassword = GetConfigValue("AdminPassword");
-                multimonitorSwitchEnabled = Boolean.Parse(GetConfigValue("MultiMonSwitchEnabled"));
-                minerSwitchEnabled = Boolean.Parse(GetConfigValue("AwesomeMinerSwitchEnabled"));
-                scriptsEnabled = Boolean.Parse(GetConfigValue("ScriptsEnabled"));
-                if (minerSwitchEnabled)
-                {
-                    minerIP = GetConfigValue("AwesomeMinerUrl");
-                    minerPort = GetConfigValue("AwesomeMinerPort");
-                    minerKey = GetConfigValue("AwesomeMinerKey");
-                }
-                if (scriptsEnabled)
-                {
-                    startupScriptPath = GetConfigValue("StartupScriptPath");
-                    startupScriptParameters = GetConfigValue("StartupScriptParameters");
-                    startupScriptElevated = Boolean.Parse(GetConfigValue("StartupScriptElevated"));
-                    shutdownScriptPath = GetConfigValue("ShutdownScriptPath");
-                    shutdownScriptParameters = GetConfigValue("StartupScriptParameters");
-                    shutdownScriptElevated = Boolean.Parse(GetConfigValue("ShutdownScriptElevated"));
-                }
+                minerIP = Properties.Settings.Default.AwesomeMinerIP;
+                minerPort = Properties.Settings.Default.AwesomeMinerPort;
+                minerKey = Properties.Settings.Default.AwesomeMinerKey;
             }
-            else
-                ThrowError("GamestreamLauncher.exe.config file is missing.  Can not run without config.", true);
+            if (scriptsEnabled)
+            {
+                startupScriptPath = Properties.Settings.Default.StartupScriptPath;
+                startupScriptParameters = Properties.Settings.Default.StartupScriptParameters;
+                shutdownScriptPath = Properties.Settings.Default.ShutdownScriptPath;
+                shutdownScriptParameters = Properties.Settings.Default.ShutdownScriptParameters;
+            }
         }
 
         public void ThrowError(string message, bool critical = false)
