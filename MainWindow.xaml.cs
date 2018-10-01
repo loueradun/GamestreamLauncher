@@ -1,10 +1,6 @@
 ﻿using GamestreamLauncher.HelperApi;
 using System;
-using System.Configuration;
-using System.IO;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
-using System.Threading;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -41,15 +37,21 @@ namespace GamestreamLauncher
         {
             InitializeComponent();
 
-            EditConfig editConfigWindow = new EditConfig();
+            var oVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            var version = "v" + oVersion.Major + "." + oVersion.Minor;
 
             if (String.IsNullOrEmpty(Properties.Settings.Default.AppName) || String.IsNullOrEmpty(Properties.Settings.Default.AppPath))
             {
+                EditConfig editConfigWindow = new EditConfig();
+
                 editConfigWindow.ShowDialog();
                 QuitGracefully(true);
             } else
             {
                 LoadConfig();
+
+                lblVersion.Content = version;
+                lblHeader.Content = appName + " Launcher";
 
                 launcherApi = new LauncherApi();
 
@@ -65,8 +67,6 @@ namespace GamestreamLauncher
                 launcherApi.ApplicationStarted += ApplicationStarted;
                 launcherApi.ApplicationStopped += ApplicationStopped;
                 launcherApi.StreamClosed += StreamClosed;
-
-                lblHeader.Content = appName + " Launcher";
 
                 StartWorkflow();
             }
