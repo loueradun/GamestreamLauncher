@@ -1,5 +1,6 @@
 ﻿using GamestreamLauncher.HelperApi;
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
@@ -29,54 +30,50 @@ namespace GamestreamLauncher
         string shutdownScriptPath;
         string shutdownScriptParameters;
 
+        bool isRestore = false;
+
         LauncherApi launcherApi;
 
         #endregion
 
-        public MainWindow()
+        public MainWindow(bool restore = false, string applicationToLaunch = null)
         {
             InitializeComponent();
 
             var oVersion = Assembly.GetExecutingAssembly().GetName().Version;
             var version = "v" + oVersion.Major + "." + oVersion.Minor;
 
-            if (String.IsNullOrEmpty(Properties.Settings.Default.AppName) || String.IsNullOrEmpty(Properties.Settings.Default.AppPath))
+            isRestore = restore;
+
+            //this.Topmost = true;
+
+            LoadConfig(applicationToLaunch);
+
+            lblVersion.Content = version;
+            lblHeader.Content = appName + " Launcher";
+
+            launcherApi = restore ? new LauncherApi(Properties.Settings.Default.MonitorsDisabled, Properties.Settings.Default.MinersDisabled) : new LauncherApi();
+
+            // configure callbacks
+            launcherApi.MonitorInfoLoaded += MonitorInfoLoaded;
+            launcherApi.MonitorModeSingle += MonitorModeSingle;
+            launcherApi.MonitorModeMulti += MonitorModeMulti;
+            launcherApi.MinerInfoLoaded += MinerInfoLoaded;
+            launcherApi.MinerDisabled += MinerDisabled;
+            launcherApi.MinerEnabled += MinerEnabled;
+            launcherApi.StartupScriptsFinished += StartupScriptsFinished;
+            launcherApi.ShutdownScriptsFinished += ShutdownScriptsFinished;
+            launcherApi.ApplicationStarted += ApplicationStarted;
+            launcherApi.ApplicationStopped += ApplicationStopped;
+            launcherApi.StreamClosed += StreamClosed;
+
+            if (restore)
+                EndWorkFlow();
+            else
             {
-                EditConfig editConfigWindow = new EditConfig();
-
-                editConfigWindow.ShowDialog();
-                QuitGracefully(true);
-            } else
-            {
-                LoadConfig();
-
-                lblVersion.Content = version;
-                lblHeader.Content = appName + " Launcher";
-
-                launcherApi = new LauncherApi();
-
-                // configure callbacks
-                launcherApi.MonitorInfoLoaded += MonitorInfoLoaded;
-                launcherApi.MonitorModeSingle += MonitorModeSingle;
-                launcherApi.MonitorModeMulti += MonitorModeMulti;
-                launcherApi.MinerInfoLoaded += MinerInfoLoaded;
-                launcherApi.MinerDisabled += MinerDisabled;
-                launcherApi.MinerEnabled += MinerEnabled;
-                launcherApi.StartupScriptsFinished += StartupScriptsFinished;
-                launcherApi.ShutdownScriptsFinished += ShutdownScriptsFinished;
-                launcherApi.ApplicationStarted += ApplicationStarted;
-                launcherApi.ApplicationStopped += ApplicationStopped;
-                launcherApi.StreamClosed += StreamClosed;
-
+                launcherApi.RunScript("net", "start NvContainerRestart");
                 StartWorkflow();
             }
-        }
-
-        protected override void OnClosed(EventArgs e)
-        {
-            base.OnClosed(e);
-
-            Application.Current.Shutdown();
         }
 
         #region Workflow
@@ -169,6 +166,7 @@ namespace GamestreamLauncher
             else
             {
                 UpdateStatus("Launching " + appName + "...");
+                //this.Topmost = false;
                 new Task(() => { launcherApi.LaunchApplication(appPath); }).Start();
             }
         }
@@ -186,14 +184,19 @@ namespace GamestreamLauncher
                     {
                         this.Close();
                     }));
-            } else
+            }
+            else if (!isRestore)
             {
                 UpdateStatus("Terminating Gamestream Session...");
                 new Task(() => { launcherApi.CloseStream(); }).Start();
             }
+            else
+                QuitGracefully(true);
         }
 
         #endregion
+
+        #region Callbacks
 
         public void MinerInfoLoaded(object sender, MinerInfoEventArgs e)
         {
@@ -221,11 +224,15 @@ namespace GamestreamLauncher
 
         public void MinerDisabled(object sender, MinerInfoEventArgs e)
         {
+            Properties.Settings.Default.MinersDisabled = e.MinersToDisable;
+            Properties.Settings.Default.Save();
             HandleMonitorJobs();
         }
 
         public void MonitorModeSingle(object sender, MonitorInfoEventArgs e)
         {
+            Properties.Settings.Default.MonitorsDisabled = e.MonitorsToDisable;
+            Properties.Settings.Default.Save();
             HandleScriptJobs();
         }
 
@@ -241,6 +248,15 @@ namespace GamestreamLauncher
 
         public void ApplicationStopped(object sender, EventArgs e)
         {
+            //if (Application.Current.Dispatcher.CheckAccess())
+            //{
+            //    this.Topmost = true;
+            //}
+            //else
+            //    Application.Current.Dispatcher.Invoke(new Action(() =>
+            //    {
+            //        this.Topmost = true;
+            //    }));
             EndWorkFlow();
         }
 
@@ -264,12 +280,14 @@ namespace GamestreamLauncher
             QuitGracefully(true);
         }
 
+        #endregion Callbacks
+
         #region UI Helpers
 
-        public void LoadConfig()
+        public void LoadConfig(string applicationPath = null)
         {
             appName = Properties.Settings.Default.AppName;
-            appPath = Properties.Settings.Default.AppPath;
+            appPath = applicationPath == null ? Properties.Settings.Default.AppPath : applicationPath;
             multimonitorSwitchEnabled = Properties.Settings.Default.MultiMonSwitchEnabled;
             minerSwitchEnabled = Properties.Settings.Default.AwesomeMinerSwitchEnabled;
             scriptsEnabled = Properties.Settings.Default.ScriptsEnabled;

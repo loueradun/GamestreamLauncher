@@ -13,5 +13,51 @@ namespace GamestreamLauncher
     /// </summary>
     public partial class App : Application
     {
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            MainWindow launcherWindow = null;
+
+            if (e.Args.Length > 0)
+            {
+                foreach(string arg in e.Args)
+                {
+                    switch (arg)
+                    {
+                        case "-config":
+                            ShowConfig();
+                            break;
+                        case "-restore":
+                            Console.WriteLine("Restoring previous config");
+                            launcherWindow = new MainWindow(true);
+                            launcherWindow.ShowDialog();
+                            Shutdown(1);
+                            break;
+                        default: // this is an application path
+                            launcherWindow = new MainWindow(false, arg);
+                            launcherWindow.ShowDialog();
+                            Shutdown(1);
+                            break;
+                    }
+                }
+            } else if (String.IsNullOrEmpty(GamestreamLauncher.Properties.Settings.Default.AppName) || String.IsNullOrEmpty(GamestreamLauncher.Properties.Settings.Default.AppPath))
+            {
+                ShowConfig();
+            }
+            else
+            {
+                launcherWindow = new MainWindow();
+                launcherWindow.ShowDialog();
+                Shutdown(1);
+            }
+        }
+
+        private void ShowConfig()
+        {
+            Console.WriteLine("Opening config window");
+            EditConfig editConfigWindow = new EditConfig();
+            editConfigWindow.ShowDialog();
+            Console.WriteLine("Config window closed");
+            Shutdown(1);
+        }
     }
 }

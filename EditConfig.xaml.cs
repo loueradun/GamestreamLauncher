@@ -64,7 +64,7 @@ namespace GamestreamLauncher
 
             if (String.IsNullOrEmpty(strError))
             {
-                MessageBox.Show("Getting ready to give general users permission to stop a Gamestream session.  Please accept the following UAC prompt or terminating Gamestream sessions will not end gracefully.", "Enabling Access To Gamestream Service", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Getting ready to give general users permission to stop a Gamestream session.  Please accept the following UAC prompt or Gamestream sessions will not end gracefully.", "Enabling Access To Gamestream Service", MessageBoxButton.OK, MessageBoxImage.Information);
                 GrantAccessGamestreamService(); // Should only really do this if necessary, but it shouldn't hurt anything for the moment
                 Properties.Settings.Default.AppName = txtAppName.Text;
                 Properties.Settings.Default.AppPath = txtAppPath.Text;
@@ -79,7 +79,7 @@ namespace GamestreamLauncher
                 Properties.Settings.Default.ShutdownScriptParameters = txtShutdownScriptParams.Text;
                 Properties.Settings.Default.ShutdownScriptPath = txtShutdownScriptPath.Text;
                 Properties.Settings.Default.Save();
-                MessageBox.Show("All application settings have been saved.  If you need to edit the config, you can find it here: " + Environment.NewLine + ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.PerUserRoaming).FilePath, "Config Updated Successfully", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("All application settings have been saved.  If you need to edit the config, you can do so by running: " + Environment.NewLine + AppDomain.CurrentDomain.BaseDirectory + "GamestreamLauncherConfig.bat", "Config Updated Successfully", MessageBoxButton.OK, MessageBoxImage.Information);
                 this.Close();
             }
             else

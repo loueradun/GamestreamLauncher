@@ -56,8 +56,13 @@ namespace GamestreamLauncher.HelperApi
         public event ApplicationStoppedEvent ApplicationStopped;
         public event StreamClosedEvent StreamClosed;
 
-        public LauncherApi()
+        public LauncherApi(List<string> monitorsDisabled = null, List<string> minersDisabled = null)
         {
+            if (monitorsDisabled != null)
+                monitorsToDisable = monitorsDisabled;
+
+            if (minersDisabled != null)
+                minersToStop = minersDisabled;
         }
 
         #region Monitor Helpers
@@ -150,6 +155,9 @@ namespace GamestreamLauncher.HelperApi
             catch(Exception ex)
             {
                 success = false;
+            } finally
+            {
+                MinerInfoLoaded?.Invoke(this, new MinerInfoEventArgs() { MinersToDisable = minersToStop });
             }
             return success;
         }
@@ -201,7 +209,7 @@ namespace GamestreamLauncher.HelperApi
             ShutdownScriptsFinished?.Invoke(this, EventArgs.Empty);
         }
 
-        private void RunScript(string scriptPath, string scriptParams = "")
+        public void RunScript(string scriptPath, string scriptParams = "")
         {
             if (!String.IsNullOrEmpty(scriptPath))
             {
@@ -230,7 +238,6 @@ namespace GamestreamLauncher.HelperApi
 
         public void CloseStream()
         {
-            RunScript("net", "start NvContainerRestart");
             RunScript("net", "stop NvContainerLocalSystem");
 
             StreamClosed?.Invoke(this, EventArgs.Empty);

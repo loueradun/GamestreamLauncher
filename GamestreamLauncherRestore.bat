@@ -1,0 +1,1 @@
+start GamestreamLauncher.exe -restore

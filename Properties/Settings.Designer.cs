@@ -166,5 +166,27 @@ namespace GamestreamLauncher.Properties {
                 this["ShutdownScriptParameters"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Generic.List<System.String> MonitorsDisabled {
+            get {
+                return ((global::System.Collections.Generic.List<System.String>)(this["MonitorsDisabled"]));
+            }
+            set {
+                this["MonitorsDisabled"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Generic.List<System.String> MinersDisabled {
+            get {
+                return ((global::System.Collections.Generic.List<System.String>)(this["MinersDisabled"]));
+            }
+            set {
+                this["MinersDisabled"] = value;
+            }
+        }
     }
 }
