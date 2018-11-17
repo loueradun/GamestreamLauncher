@@ -149,8 +149,6 @@ namespace GamestreamLauncher.HelperApi
                         }
                     }
                 }
-
-                MinerInfoLoaded?.Invoke(this, new MinerInfoEventArgs() { MinersToDisable = minersToStop });
             }
             catch(Exception ex)
             {

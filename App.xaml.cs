@@ -15,7 +15,7 @@ namespace GamestreamLauncher
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            MainWindow launcherWindow = null;
+            GamestreamLauncherWindow launcherWindow = null;
 
             if (e.Args.Length > 0)
             {
@@ -28,12 +28,12 @@ namespace GamestreamLauncher
                             break;
                         case "-restore":
                             Console.WriteLine("Restoring previous config");
-                            launcherWindow = new MainWindow(true);
+                            launcherWindow = new GamestreamLauncherWindow(true);
                             launcherWindow.ShowDialog();
                             Shutdown(1);
                             break;
                         default: // this is an application path
-                            launcherWindow = new MainWindow(false, arg);
+                            launcherWindow = new GamestreamLauncherWindow(false, arg);
                             launcherWindow.ShowDialog();
                             Shutdown(1);
                             break;
@@ -45,7 +45,7 @@ namespace GamestreamLauncher
             }
             else
             {
-                launcherWindow = new MainWindow();
+                launcherWindow = new GamestreamLauncherWindow();
                 launcherWindow.ShowDialog();
                 Shutdown(1);
             }

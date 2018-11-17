@@ -1,11 +1,11 @@
-﻿<Window x:Class="GamestreamLauncher.MainWindow"
+﻿<Window x:Class="GamestreamLauncher.GamestreamLauncherWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GamestreamLauncher"
         mc:Ignorable="d"
-        Title="MainWindow" Height="768" Width="1276" FontFamily="Rockwell" WindowState="Maximized" WindowStyle="None">
+        Title="GamestreamLauncher" Height="768" Width="1276" FontFamily="Rockwell" WindowState="Maximized" WindowStyle="None" Icon="Asssets/appicon.png">
     <Window.Background>
         <ImageBrush ImageSource="Asssets/wallpaper.png"/>
     </Window.Background>

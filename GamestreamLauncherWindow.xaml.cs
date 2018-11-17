@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -10,7 +11,7 @@ namespace GamestreamLauncher
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class GamestreamLauncherWindow : Window
     {
         #region Config
 
@@ -36,7 +37,7 @@ namespace GamestreamLauncher
 
         #endregion
 
-        public MainWindow(bool restore = false, string applicationToLaunch = null)
+        public GamestreamLauncherWindow(bool restore = false, string applicationToLaunch = null)
         {
             InitializeComponent();
 
@@ -71,7 +72,6 @@ namespace GamestreamLauncher
                 EndWorkFlow();
             else
             {
-                launcherApi.RunScript("net", "start NvContainerRestart");
                 StartWorkflow();
             }
         }
@@ -166,6 +166,7 @@ namespace GamestreamLauncher
             else
             {
                 UpdateStatus("Launching " + appName + "...");
+                launcherApi.RunScript("net", "start NvContainerRestart");
                 //this.Topmost = false;
                 new Task(() => { launcherApi.LaunchApplication(appPath); }).Start();
             }
