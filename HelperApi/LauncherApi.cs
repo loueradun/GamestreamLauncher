@@ -23,7 +23,7 @@ namespace GamestreamLauncher.HelperApi
     class LauncherApi
     {
         string multimonitortoolPath = System.AppDomain.CurrentDomain.BaseDirectory + "Binaries\\MultiMonitorTool.exe";
-        string multimonitortoolConfigName = "defaultMonitorSetup.cfg";
+        string multimonitortoolConfigName = System.AppDomain.CurrentDomain.BaseDirectory + "defaultMonitorSetup.cfg";
 
         string minerIP = "";
         string minerPort = "";
@@ -88,7 +88,7 @@ namespace GamestreamLauncher.HelperApi
                 }
             }
 
-            myProcess = new Process { StartInfo = new ProcessStartInfo(multimonitortoolPath, "/saveConfig " + multimonitortoolConfigName) };
+            myProcess = new Process { StartInfo = new ProcessStartInfo(multimonitortoolPath, "/saveConfig \"" + multimonitortoolConfigName + "\"") };
             myProcess.Start();
             myProcess.WaitForExit();
 
@@ -101,7 +101,7 @@ namespace GamestreamLauncher.HelperApi
             {
                 foreach (string monitor in monitorsToDisable) // for some reason loading the original config will only re-enable a single monitor so we must run this for each monitor we disabled
                 {
-                    RunScript(multimonitortoolPath, "/loadConfig " + multimonitortoolConfigName);
+                    RunScript(multimonitortoolPath, "/loadConfig \"" + multimonitortoolConfigName + "\"");
                 }
                 MonitorModeMulti?.Invoke(this, new MonitorInfoEventArgs() { MonitorsToDisable = monitorsToDisable });
             }

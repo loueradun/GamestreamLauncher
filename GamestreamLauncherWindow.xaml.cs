@@ -176,15 +176,18 @@ namespace GamestreamLauncher
         {
             if (closeApp)
             {
-                if (Application.Current.Dispatcher.CheckAccess())
+                if (Application.Current != null)
                 {
-                    this.Close();
-                }
-                else
-                    Application.Current.Dispatcher.Invoke(new Action(() =>
+                    if (Application.Current.Dispatcher.CheckAccess())
                     {
                         this.Close();
-                    }));
+                    }
+                    else
+                        Application.Current.Dispatcher.Invoke(new Action(() =>
+                        {
+                            this.Close();
+                        }));
+                }
             }
             else if (!isRestore)
             {

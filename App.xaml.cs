@@ -29,7 +29,8 @@ namespace GamestreamLauncher
                         case "-restore":
                             Console.WriteLine("Restoring previous config");
                             launcherWindow = new GamestreamLauncherWindow(true);
-                            launcherWindow.ShowDialog();
+                            System.Threading.Thread.Sleep(5000);
+                            //launcherWindow.ShowDialog();
                             Shutdown(1);
                             break;
                         default: // this is an application path
