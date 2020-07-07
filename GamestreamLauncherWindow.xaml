@@ -4,13 +4,26 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GamestreamLauncher"
+        xmlns:uc="clr-namespace:GamestreamLauncher.UserControls"
         mc:Ignorable="d"
-        Title="GamestreamLauncher" Height="768" Width="1276" FontFamily="Rockwell" WindowState="Maximized" WindowStyle="None" Icon="Asssets/appicon.png">
+        Name="MainWindow"
+        Title="GamestreamLauncher" Height="768" Width="1276" FontFamily="Rockwell" WindowState="Maximized" WindowStyle="None" Icon="Assets/appicon.png">
+    <Window.Resources>
+        <Style TargetType="{x:Type Label}">
+            <Setter Property="Control.Foreground" Value="{DynamicResource textColor}"></Setter>
+        </Style>
+    </Window.Resources>
     <Window.Background>
-        <ImageBrush ImageSource="Asssets/wallpaper.png"/>
+        <ImageBrush ImageSource="Assets/wallpaper.png"/>
     </Window.Background>
-
     <Grid>
+        <Grid.Background>
+            <VisualBrush>
+                <VisualBrush.Visual>
+                    <MediaElement Name="bgImage" LoadedBehavior="Play" Source="Assets/wallpaper.png"/>
+                </VisualBrush.Visual>
+            </VisualBrush>
+        </Grid.Background>
         <Grid.RowDefinitions>
             <RowDefinition Height="4*"></RowDefinition>
             <RowDefinition Height="3*"></RowDefinition>
@@ -29,85 +42,19 @@
                 <ColumnDefinition Width="3.5*"></ColumnDefinition>
                 <ColumnDefinition Width="1*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-                <Border ClipToBounds="True" Grid.Row="1" Grid.Column="1" BorderThickness="0" Margin="1" >
-                <Grid Grid.Row="1" Grid.Column="1">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*"></RowDefinition>
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1*"></ColumnDefinition>
-                        <ColumnDefinition Width="3.5*"></ColumnDefinition>
-                        <ColumnDefinition Width="1*"></ColumnDefinition>
-                    </Grid.ColumnDefinitions>
-                    <Border Name="clipBorder" Grid.Row="1" Grid.Column="1">
-                        <StackPanel Name="stack" Grid.Row="0" Grid.Column="1" Orientation="Horizontal" ClipToBounds="True">
-                            <StackPanel.Triggers>
-                                <EventTrigger RoutedEvent="StackPanel.Loaded">
-                                    <BeginStoryboard>
-                                        <Storyboard>
-                                            <DoubleAnimation From="900" To="0" Duration="00:00:02" Storyboard.TargetProperty="X" Storyboard.TargetName="transitionSlide">
-                                                <DoubleAnimation.EasingFunction>
-                                                    <CubicEase EasingMode="EaseInOut"></CubicEase>
-                                                </DoubleAnimation.EasingFunction>
-                                            </DoubleAnimation>
-                                        </Storyboard>
-                                    </BeginStoryboard>
-                                </EventTrigger>
-                            </StackPanel.Triggers>
-                            <StackPanel.RenderTransform>
-                                <TranslateTransform x:Name="transitionSlide" X="0"/>
-                            </StackPanel.RenderTransform>
-                            <Border Name="slide1" Width="{Binding ActualWidth, ElementName=clipBorder}">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="1*"></RowDefinition>
-                                    </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="1*"></ColumnDefinition>
-                                        <ColumnDefinition Width="1*"></ColumnDefinition>
-                                    </Grid.ColumnDefinitions>
-                                    <Viewbox Grid.Row="0" Grid.Column="0" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" StretchDirection="Both">
-                                        <Label Foreground="White" Margin="5">
-                                            <TextBlock TextAlignment="Center">
-                                                Enable multi-controller mode<LineBreak/>by holding Start and clicking<LineBreak/>the option in the menu.
-                                            </TextBlock>
-                                        </Label>
-                                    </Viewbox>
-                                    <Image Grid.Row="0" Grid.Column="1" Margin="5" Source="Asssets/multicontroller.png" StretchDirection="Both"></Image>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-                    <Rectangle Grid.Row="0" Grid.Column="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="-1,0,0,0">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="#FF222C36" Offset="0.2"></GradientStop>
-                                <GradientStop Color="#00222C36" Offset="1"></GradientStop>
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-                    <Rectangle Grid.Row="0" Grid.Column="2" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0,0,-1,0">
-                        <Rectangle.Fill>
-                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                <GradientStop Color="#00222C36" Offset="0"></GradientStop>
-                                <GradientStop Color="#FF222C36" Offset="0.8"></GradientStop>
-                            </LinearGradientBrush>
-                        </Rectangle.Fill>
-                    </Rectangle>
-                </Grid>
-            </Border>
+            <uc:SlideControl Grid.Row="1" Grid.Column="1"></uc:SlideControl>
         </Grid>
         <Grid Grid.Row="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"></RowDefinition>
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"></ColumnDefinition>
                 <ColumnDefinition Width="1*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="1">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="8*"></RowDefinition>
+                    <RowDefinition Height="1.5*"></RowDefinition>
+                    <RowDefinition Height="6.5*"></RowDefinition>
                     <RowDefinition Height="2*"></RowDefinition>
                     <RowDefinition Height="2*"></RowDefinition>
                     <RowDefinition Height="1*"></RowDefinition>
@@ -115,19 +62,18 @@
                 </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="1*"></ColumnDefinition>
-                    <ColumnDefinition Width="8*"></ColumnDefinition>
-                    <ColumnDefinition Width="10*"></ColumnDefinition>
+                    <ColumnDefinition Width="55*"></ColumnDefinition>
                     <ColumnDefinition Width="0.5*"></ColumnDefinition>
                     <ColumnDefinition Width="1.5*"></ColumnDefinition>
                     <ColumnDefinition Width="1*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <Viewbox Grid.Row="2" Grid.Column="1" Margin="0,0,0,0" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.ColumnSpan="2">
-                    <Label x:Name="lblHeader" Content="Gamestream Launcher" Padding="0" VerticalAlignment="Bottom" Foreground="White"/>
+                <Viewbox Grid.Row="3" Grid.Column="1" Margin="0,0,0,0" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Label x:Name="lblHeader" Content="Gamestream Launcher" Padding="0" VerticalAlignment="Bottom"/>
                 </Viewbox>
-                <Viewbox Grid.Row="3" Grid.Column="2" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.ColumnSpan="3" StretchDirection="Both">
-                    <Label x:Name="lblAuthor" Content="Developed by loueradun" Padding="0" Foreground="White"/>
+                <Viewbox Grid.Row="4" Grid.Column="1" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.ColumnSpan="3" StretchDirection="Both">
+                    <Label x:Name="lblAuthor" Content="Developed by loueradun" Padding="0"/>
                 </Viewbox>
-                <Grid Grid.Row="2" Grid.Column="4">
+                <Grid Grid.Row="3" Grid.Column="3">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="1*"></RowDefinition>
                         <RowDefinition Height="6*"></RowDefinition>
@@ -137,12 +83,11 @@
                         <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <Viewbox Grid.Row="1" Grid.Column="0" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Bottom" StretchDirection="Both">
-                        <Label x:Name="lblVersion" Margin="0,10,0,0" Content="v1.0" Padding="0" Foreground="White"/>
+                        <Label x:Name="lblVersion" Margin="0,10,0,0" Content="v1.0" Padding="0"/>
                     </Viewbox>
                 </Grid>
-                <Viewbox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="4" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Top" Height="20px
-                         " StretchDirection="Both">
-                    <Label x:Name="lblStatus" Content="" HorizontalAlignment="Right" Padding="0" Foreground="White"/>
+                <Viewbox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Stretch="Uniform" HorizontalAlignment="Right" VerticalAlignment="Top" StretchDirection="Both" >
+                    <Label x:Name="lblStatus" Content="" HorizontalAlignment="Right" Padding="0" />
                 </Viewbox>
             </Grid>
         </Grid>

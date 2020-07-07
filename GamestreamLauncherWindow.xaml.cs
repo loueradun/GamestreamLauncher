@@ -1,5 +1,7 @@
 ﻿using GamestreamLauncher.HelperApi;
 using System;
+using System.ComponentModel;
+using System.Drawing;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -15,8 +17,14 @@ namespace GamestreamLauncher
     {
         #region Config
 
+        bool testUI = false;
+
         string appPath = "";
         string appName = "Gamestream";
+        string imageName = null;
+
+        int resX = 1920;
+        int resY = 1080;
 
         bool multimonitorSwitchEnabled = false;
         bool minerSwitchEnabled = false;
@@ -46,8 +54,6 @@ namespace GamestreamLauncher
 
             isRestore = restore;
 
-            //this.Topmost = true;
-
             LoadConfig(applicationToLaunch);
 
             lblVersion.Content = version;
@@ -68,11 +74,14 @@ namespace GamestreamLauncher
             launcherApi.ApplicationStopped += ApplicationStopped;
             launcherApi.StreamClosed += StreamClosed;
 
-            if (restore)
-                EndWorkFlow();
-            else
+            if (!testUI)
             {
-                StartWorkflow();
+                if (restore)
+                    EndWorkFlow();
+                else
+                {
+                    StartWorkflow();
+                }
             }
         }
 
@@ -113,24 +122,15 @@ namespace GamestreamLauncher
 
         public void HandleMonitorJobs(bool restore = false)
         {
-            if (multimonitorSwitchEnabled)
+            // We will always be doing monitor jobs now as we are going to set the Gamestream resolution...
+            if (restore)
             {
-                if (restore)
-                {
-                    UpdateStatus("Switching to multiple monitor mode...");
-                    new Task(() => { launcherApi.SwitchMonitorMode(true); }).Start();
-                } else
-                {
-                    UpdateStatus("Saving current monitor config to disk...");
-                    new Task(() => { launcherApi.LoadMonitorInfo(); }).Start();
-                }
-            }
-            else
+                UpdateStatus(multimonitorSwitchEnabled ? "Switching to multiple monitor mode and restoring desktop resolution..." : "Restoring desktop resolution...");
+                new Task(() => { launcherApi.SwitchMonitorMode(true); }).Start();
+            } else
             {
-                if (restore)
-                    HandleMinerJobs(restore);
-                else
-                    HandleScriptJobs(restore);
+                UpdateStatus("Saving current monitor config to disk...");
+                new Task(() => { launcherApi.LoadMonitorInfo(); }).Start();
             }
         }
 
@@ -216,14 +216,8 @@ namespace GamestreamLauncher
 
         public void MonitorInfoLoaded(object sender, MonitorInfoEventArgs e)
         {
-            if (e.MonitorsToDisable.Count > 0)
-            {
-                UpdateStatus("Switching to single monitor mode...");
-                new Task(() => { launcherApi.SwitchMonitorMode(); }).Start();
-            } else
-            {
-                HandleScriptJobs();
-            }
+            UpdateStatus(multimonitorSwitchEnabled ? "Switching to single monitor mode and setting Gamestream resolution..." : "Setting Gamestream resolution...");
+            new Task(() => { launcherApi.SwitchMonitorMode(false, multimonitorSwitchEnabled, resX, resY); }).Start();
         }
 
         public void MinerDisabled(object sender, MinerInfoEventArgs e)
@@ -252,15 +246,6 @@ namespace GamestreamLauncher
 
         public void ApplicationStopped(object sender, EventArgs e)
         {
-            //if (Application.Current.Dispatcher.CheckAccess())
-            //{
-            //    this.Topmost = true;
-            //}
-            //else
-            //    Application.Current.Dispatcher.Invoke(new Action(() =>
-            //    {
-            //        this.Topmost = true;
-            //    }));
             EndWorkFlow();
         }
 
@@ -295,6 +280,9 @@ namespace GamestreamLauncher
             multimonitorSwitchEnabled = Properties.Settings.Default.MultiMonSwitchEnabled;
             minerSwitchEnabled = Properties.Settings.Default.AwesomeMinerSwitchEnabled;
             scriptsEnabled = Properties.Settings.Default.ScriptsEnabled;
+            imageName = Properties.Settings.Default.BackgroundImage;
+            resX = Properties.Settings.Default.ResolutionWidth;
+            resY = Properties.Settings.Default.ResolutionHeight;
             if (minerSwitchEnabled)
             {
                 minerIP = Properties.Settings.Default.AwesomeMinerIP;
@@ -308,6 +296,21 @@ namespace GamestreamLauncher
                 shutdownScriptPath = Properties.Settings.Default.ShutdownScriptPath;
                 shutdownScriptParameters = Properties.Settings.Default.ShutdownScriptParameters;
             }
+            if (imageName != null && imageName.Length > 0)
+            {
+                bgImage.LoadedBehavior = System.Windows.Controls.MediaState.Play;
+                bgImage.Source = new Uri(imageName);
+                bgImage.MediaEnded += BgImage_MediaEnded;
+            } else
+            {
+                bgImage.IsEnabled = false;
+                bgImage.Visibility = Visibility.Hidden;
+            }
+        }
+
+        private void BgImage_MediaEnded(object sender, RoutedEventArgs e)
+        {
+            bgImage.Position = TimeSpan.Zero;
         }
 
         public void ThrowError(string message, bool critical = false)

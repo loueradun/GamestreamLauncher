@@ -17,6 +17,7 @@ namespace GamestreamLauncher
 
             txtAppName.Text = Properties.Settings.Default.AppName;
             txtAppPath.Text = Properties.Settings.Default.AppPath;
+            txtResolution.Text = Properties.Settings.Default.ResolutionWidth + "x" + Properties.Settings.Default.ResolutionHeight;
             chkMiner.IsChecked = Properties.Settings.Default.AwesomeMinerSwitchEnabled;
             chkMonitor.IsChecked = Properties.Settings.Default.MultiMonSwitchEnabled;
             chkScripts.IsChecked = Properties.Settings.Default.ScriptsEnabled;
@@ -27,6 +28,8 @@ namespace GamestreamLauncher
             txtStartupScriptParams.Text = Properties.Settings.Default.StartupScriptParameters;
             txtShutdownScriptPath.Text = Properties.Settings.Default.ShutdownScriptPath;
             txtShutdownScriptParams.Text = Properties.Settings.Default.ShutdownScriptParameters;
+            txtBackgroundImage.Text = Properties.Settings.Default.BackgroundImage;
+            cpTextColor.SelectedColor = HelperApi.LauncherApi.getMediaColor(Properties.Settings.Default.TextColor);
 
             UpdateUI();
         }
@@ -49,6 +52,16 @@ namespace GamestreamLauncher
                     strError = "The Miner could not be reached at " + String.Format("http://{0}:{1}/api/miners?key={2}", txtMinerIP.Text, txtMinerPort.Text, txtMinerApiKey.Text) + Environment.NewLine + "Please check the Miner IP, Port, and API Key.";
 
                 // call awesome miner web portal and verify connectivity
+            }
+
+            try
+            {
+                var resA = txtResolution.Text.Split('x');
+                Properties.Settings.Default.ResolutionWidth = int.Parse(resA[0]);
+                Properties.Settings.Default.ResolutionHeight = int.Parse(resA[1]);
+            } catch(Exception)
+            {
+                strError = "The resolution must be specified in the following format WxH. ex: \"1920x1080\"";
             }
 
             if (chkScripts.IsChecked.GetValueOrDefault())
@@ -78,6 +91,11 @@ namespace GamestreamLauncher
                 Properties.Settings.Default.StartupScriptParameters = txtStartupScriptParams.Text;
                 Properties.Settings.Default.ShutdownScriptParameters = txtShutdownScriptParams.Text;
                 Properties.Settings.Default.ShutdownScriptPath = txtShutdownScriptPath.Text;
+                Properties.Settings.Default.BackgroundImage = txtBackgroundImage.Text;
+                if (cpTextColor.SelectedColor.HasValue)
+                {
+                    Properties.Settings.Default.TextColor = HelperApi.LauncherApi.getDrawingColor(cpTextColor.SelectedColor.Value);
+                }
                 Properties.Settings.Default.Save();
                 MessageBox.Show("All application settings have been saved.  If you need to edit the config, you can do so by running: " + Environment.NewLine + AppDomain.CurrentDomain.BaseDirectory + "GamestreamLauncherConfig.bat", "Config Updated Successfully", MessageBoxButton.OK, MessageBoxImage.Information);
                 this.Close();
@@ -99,6 +117,11 @@ namespace GamestreamLauncher
         private void btnBrowseAppPath_Click(object sender, RoutedEventArgs e)
         {
             txtAppPath.Text = BrowseForFile(txtAppPath.Text);
+        }
+
+        private void btnBrowseBackgroundImagePath_Click(object sender, RoutedEventArgs e)
+        {
+            txtBackgroundImage.Text = BrowseForFile(txtBackgroundImage.Text);
         }
 
         private string BrowseForFile(string currentVal)

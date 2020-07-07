@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data;
+using System.Windows.Media;
 
 namespace GamestreamLauncher
 {
@@ -29,8 +32,7 @@ namespace GamestreamLauncher
                         case "-restore":
                             Console.WriteLine("Restoring previous config");
                             launcherWindow = new GamestreamLauncherWindow(true);
-                            System.Threading.Thread.Sleep(5000);
-                            //launcherWindow.ShowDialog();
+                            launcherWindow.ShowDialog();
                             Shutdown(1);
                             break;
                         default: // this is an application path
@@ -46,6 +48,7 @@ namespace GamestreamLauncher
             }
             else
             {
+                SetupResources();
                 launcherWindow = new GamestreamLauncherWindow();
                 launcherWindow.ShowDialog();
                 Shutdown(1);
@@ -59,6 +62,11 @@ namespace GamestreamLauncher
             editConfigWindow.ShowDialog();
             Console.WriteLine("Config window closed");
             Shutdown(1);
+        }
+
+        private void SetupResources()
+        {
+            Application.Current.Resources["textColor"] = new SolidColorBrush(HelperApi.LauncherApi.getMediaColor(GamestreamLauncher.Properties.Settings.Default.TextColor));
         }
     }
 }

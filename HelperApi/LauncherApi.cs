@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Security;
+using System.Threading;
 using System.Xml;
 
 namespace GamestreamLauncher.HelperApi
@@ -23,6 +24,7 @@ namespace GamestreamLauncher.HelperApi
     class LauncherApi
     {
         string multimonitortoolPath = System.AppDomain.CurrentDomain.BaseDirectory + "Binaries\\MultiMonitorTool.exe";
+        string nircmdPath = System.AppDomain.CurrentDomain.BaseDirectory + "Binaries\\nircmd.exe";
         string multimonitortoolConfigName = System.AppDomain.CurrentDomain.BaseDirectory + "defaultMonitorSetup.cfg";
 
         string minerIP = "";
@@ -95,19 +97,26 @@ namespace GamestreamLauncher.HelperApi
             MonitorInfoLoaded?.Invoke(this, new MonitorInfoEventArgs() { MonitorsToDisable = monitorsToDisable });
         }
 
-        public void SwitchMonitorMode(bool restore = false)
+        public void SwitchMonitorMode(bool restore = false, bool disableMons = false, int x = 1920, int y = 1080)
         {
             if (restore)
             {
-                foreach (string monitor in monitorsToDisable) // for some reason loading the original config will only re-enable a single monitor so we must run this for each monitor we disabled
+                for (int i = 0; i < monitorsToDisable.Count; i++) // for some reason loading the original config will only re-enable a single monitor so we must run this for each monitor we disabled
                 {
                     RunScript(multimonitortoolPath, "/loadConfig \"" + multimonitortoolConfigName + "\"");
+                    Thread.Sleep(3000);
                 }
                 MonitorModeMulti?.Invoke(this, new MonitorInfoEventArgs() { MonitorsToDisable = monitorsToDisable });
             }
             else
             {
-                RunScript(multimonitortoolPath, "/disable " + String.Join(" ", monitorsToDisable.ToArray()));
+                if (disableMons)
+                {
+                    RunScript(multimonitortoolPath, "/disable " + String.Join(" ", monitorsToDisable.ToArray()));
+                    Thread.Sleep(3000);
+                }
+
+                RunScript(nircmdPath, "setdisplay " + x + " " + y + " 32");
                 MonitorModeSingle?.Invoke(this, new MonitorInfoEventArgs() { MonitorsToDisable = monitorsToDisable });
             }
         }
@@ -241,6 +250,18 @@ namespace GamestreamLauncher.HelperApi
             StreamClosed?.Invoke(this, EventArgs.Empty);
         }
 
+        #endregion
+
+        #region UI Helpers
+        static public System.Windows.Media.Color getMediaColor(System.Drawing.Color color)
+        {
+            return System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B);
+        }
+
+        static public System.Drawing.Color getDrawingColor(System.Windows.Media.Color color)
+        {
+            return System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
+        }
         #endregion
     }
 }
