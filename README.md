@@ -1,5 +1,8 @@
 ﻿GamestreamLauncher is a simpler launcher application to help assist with operations to be completed before and after your gamestream session.  
 
+Release notes 1.3.1:
+Fix issues saving current monitor info when only using a single display.
+
 Release notes 1.3.0:  
 Fix bug causing launcher to not restore state when session is terminated from the gamestream menu.  Issue #3  
 Add ability to set a an image or looping video as the wallpaper.  
