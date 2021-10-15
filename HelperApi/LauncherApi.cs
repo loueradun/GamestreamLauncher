@@ -101,7 +101,7 @@ namespace GamestreamLauncher.HelperApi
         {
             if (restore)
             {
-                for (int i = 0; i < monitorsToDisable.Count; i++) // for some reason loading the original config will only re-enable a single monitor so we must run this for each monitor we disabled
+                for (int i = 0; i <= monitorsToDisable.Count; i++) // for some reason loading the original config will only re-enable a single monitor so we must run this for each monitor we disabled
                 {
                     RunScript(multimonitortoolPath, "/loadConfig \"" + multimonitortoolConfigName + "\"");
                     Thread.Sleep(3000);
